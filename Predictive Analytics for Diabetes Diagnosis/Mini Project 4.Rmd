@@ -1,0 +1,91 @@
+---
+title: "Logistic Regression - Predicting Diabetes Diagnosis"
+author: "Robert Dang"
+subtitle: "Date: May 13, 2024"
+output: html_document
+---
+## Data Cleaning/Preparation
+In the provided code, I started by importing the "diabetes.csv" dataset into the `data` variable. Next, I standardized the height and weight variables to SI units by multiplying the height variable by .0254 and weight variable by .453592. I created a BMI vaiable using these standardized variables and categorized it into "underweight", "normal", "overweight", and "obese" categories. Then, I recoded the `insurance` and `smoking` variables to give more description. Finally, I conduct checks to ensure the accuracy of the data cleaning process by using frequency tables. Through these steps, I ensure the dataset is prepared for further analysis.
+```{r warning=FALSE, message=FALSE, results="hide"}
+library(dplyr)
+library("ggplot2")
+data <- read.csv("diabetes.csv")
+data$height.si <- data$height * .0254
+data$weight.si <- data$weight * 0.453592
+data$bmi <- data$weight.si/(data$height.si^2)
+data$bmi_categorized <- ifelse(data$bmi < 18.5, "underweight",
+                                ifelse(data$bmi >= 18.5 & data$bmi <= 25, "normal",
+                                       ifelse(data$bmi > 25 & data$bmi <= 30, "overweight",
+                                              ifelse(data$bmi > 30, "obese", NA))))
+
+data$insurance <- ifelse(data$insurance == 0, "none",
+                         ifelse(data$insurance == 1, "government",
+                                ifelse(data$insurance == 2, "private", data$insurance)))
+
+data$smoking <- ifelse(data$smoking == 1, "current",
+                       ifelse(data$smoking == 2, "never",
+                              ifelse(data$smoking == 3, "ex-smoker", data$smoking)))
+table(data$insurance)
+table(data$smoking)
+
+```
+
+
+## Exploratory Data Analysis
+In this dataset, there are 403 observations. Approximately 38.29% of individuals are categorized as obese. Females represent approximately 58% of the dataset. Roughly 15.38% of individuals have diabetes. The average age of individuals is 47 years, and the average BMI is 29, indicating an overweight status. 
+```{r warning=FALSE, message=FALSE, results="hide"}
+nrow(data)
+bmi_freq <- table(data$bmi_categorized)
+bmi_percentage <- round((prop.table(bmi_freq) * 100),2)
+print(bmi_percentage)
+
+genderpct <- round((prop.table(table(data$gender)) * 100),2)
+print(genderpct)
+
+#diabetes
+round((prop.table(table(data$dm))* 100),2)
+
+
+round(mean(data$age))
+
+round(mean(data$bmi, na.rm = TRUE))
+table(data$smoking)
+
+```
+
+
+## Data Visualization
+Figure 1 displays the frequency distribution of different insurance categories: government, private, and none. The most prevalent category is government, with just under 150 occurrences, followed by private as the second most common, and none with the lowest count. In Figure 2, the count of smoking categories—current, ex-smoker, and never—is depicted, with never exhibiting the highest count, exceeding 200 instances. Current smokers comprise slightly less than 125 occurrences, while ex-smokers total just over 50 instances. Moving to Figure 3, a scatter plot illustrates the relationship between BMI (independent variable) and cholesterol levels (dependent variable), revealing a weak positive correlation, as indicated by a correlation coefficient of .0859. Figure 4 presents a histogram depicting the age distribution within the dataset, using a binwidth of 5. The mode is concentrated around 40 years, suggestive of a skewed right distribution.
+```{r warning=FALSE, message=FALSE}
+
+ggplot(data, aes(x = insurance)) +
+  geom_bar(fill = "coral") +
+  labs(title = "Figure 1. Frequency of Insurance Categories", x = "Insurance Category", y = "Frequency")
+
+ggplot(data, aes(x = smoking)) +
+  geom_bar(fill = "skyblue") +
+  labs(title = "Figure 2. Frequency of Smoking Status", x = "Smoking Staus", y = "Frequency")
+
+ggplot(data = data, aes(x = bmi, y = chol)) +
+  geom_point() +
+  geom_smooth(method = "lm",  color = "blue") + 
+  labs(title = "Figure 3. Relationship between BMI and Cholesterol",
+       x = "Body Mass Index (BMI)",
+       y = "Cholesterol")
+
+cor(data$bmi, data$chol, use = "complete.obs")
+
+ggplot(data, aes(x = age)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", color = "black") +
+  labs(title = "Figure 4. Histogram of Age", x = "Age", y = "Frequency")
+
+
+```
+
+## Logistic Regression Results
+For each year increase in age, the log-odds of having diabetes increase by 0.05545. This suggests that older people are slightly more likely to have diabetes, all else being equal. For each one-unit increase in BMI, the log-odds of having diabetes increase by 0.07388. This suggests that higher BMI is associated with an increased likelihood of having diabetes. The coefficient for gender represents the difference between males and females. In this model, being male (compared to being female) increases the log-odds of having diabetes by 0.24485. This indicates that, on average, males have higher odds of having diabetes compared to females.
+```{r warning=FALSE, message=FALSE, results="hide"}
+glm(dm ~ age + gender + bmi, data = data, family = binomial)
+
+```
+

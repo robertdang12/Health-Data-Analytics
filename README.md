@@ -2,9 +2,9 @@
 This repository contains projects completed during my Health Data Analytics course, where I worked with real-world healthcare datasets to extract actionable insights. The projects involve analyzing complex health data, including electronic health records (EHRs), claims data, and surveys, using R and relevant data analysis packages.
 
 # Project Links
-Linear Regression: Predicting Medical Costs:  
+### Linear Regression: Predicting Medical Costs:  
 https://robertdang12.github.io/Health-Data-Analytics/linear-regression-healthcare-costs/  
-Analysis of Sex Disparities in Physical Health:  
+### Analysis of Sex Disparities in Physical Health:  
 https://robertdang12.github.io/Health-Data-Analytics/gender-disparities-health-brfss-2010/
 
 ## Course Overview:

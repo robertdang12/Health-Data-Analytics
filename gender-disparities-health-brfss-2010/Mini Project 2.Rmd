@@ -1,0 +1,91 @@
+---
+title: "Analysis of Sex Disparities in Physical Health"
+author: "Robert Dang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+# Introduction
+The research question guiding this analysis is: Is the number of days of physical health not good greater in males compared to females, as observed in data from the Behavioral Risk Factor Surveillance System (BRFSS) 2010 survey?
+
+This research holds significant importance as it delves into the disparities prevalent in physical health outcomes between genders. Such insights serve as a cornerstone for formulating targeted interventions and health promotion activities. By unraveling whether differences exist in the number of days of poor physical health between males and females, healthcare practitioners can refine their interventions to cater to specific demographic groups, thereby fostering improvements in overall population health.
+
+A variety of stakeholders are impacted by the findings of this research. Public health officials and policymakers can leverage these insights to inform the development of public health policies and programs aimed at mitigating health disparities. Healthcare providers can sculpt their patient care plans to render more precise and impactful interventions. Individuals can also harness this knowledge to gain deeper insights into their own health risks and take proactive measures to enhance their well-being.
+
+In the institutional setting of patient care, the results of this analysis are profound. By showcasing disparities in physical health outcomes between males and females, healthcare providers are empowered to allocate resources judiciously and craft interventions that cater to the unique needs of diverse demographic groups. For instance, if the analysis shows that males exhibit a higher number of days of poor physical health compared to females, healthcare institutions may choose to prioritize the implementation of preventive measures and targeted health promotion activities for males. In doing so, healthcare institutions can effectively address gender-specific health needs, fostering a more equitable and inclusive approach to healthcare delivery. This analysis can play a pivotal role in reducing healthcare disparities and promoting health equity across diverse populations, ultimately fostering a more just and inclusive healthcare system.
+
+# Data Cleaning and Exploratory Data Analysis
+
+```{r include= FALSE}
+install.packages("ggplot2", repos = "http://cran.us.r-project.org")
+library("ggplot2")
+install.packages("dplyr", repos = "http://cran.us.r-project.org")
+library(dplyr)
+brfss <- read.csv("BRFSS.csv")
+nrow(brfss) # num of rows
+ncol(brfss) # num of variables
+# recode
+brfss <- brfss %>%
+  mutate(PHYSHLTH = ifelse(PHYSHLTH %in% c(88, 77, 99), NA, PHYSHLTH))
+#check to see if recoded variables are excluded
+table(brfss$PHYSHLTH)
+
+brfss <- brfss %>%
+  mutate(SEX2 = ifelse(SEX == 1, "Male", "Female"))
+table(brfss$SEX, brfss$SEX2)
+
+mean_days <- round(mean(brfss$PHYSHLTH, na.rm = TRUE), 1) #mean of PHYSHLTH
+mean_days
+
+# percentage of each sex in dataset
+males_pct <- round(nrow(filter(brfss, SEX2 == "Male"))/nrow(brfss), 2) * 100
+females_pct <- round(nrow(filter(brfss, SEX2 == "Female"))/nrow(brfss), 2) * 100
+males_pct
+females_pct
+
+```
+
+The source of this data analysis is the Behavioral Risk Factor Surveillance System (BRFSS) 2010 survey. There are 3260 observations across 398 columns. Firstly, values indicating "None", "Don’t know/Not sure", or "Refused" in the 'PHYSHLTH' variable were recoded to NA. This was accomplished using the mutate() and ifelse() functions to identify and replace the specified values. I verified this recoding worked by using a contingency table to show the count of variables in PHYSHLTH.' The values corresponding to "None", "Don’t know/Not sure", or "Refused" (88, 77, 99 respectively) were no longer in the column. The mean of the physical health variable is 15. The dataset consists of 69% females of 31% males.
+
+# Data Visualization
+
+
+```{r pressure, echo=FALSE}
+
+# Histogram for PHYSHEALTH distribution
+ggplot(data = brfss, aes(x = PHYSHLTH)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Poor Physical Health Days",
+       x = "Number of Days",
+       y = "Frequency")
+# Boxplot for PHYSHLTH by SEX2
+ggplot(data = brfss, aes(x = SEX2, y = PHYSHLTH, fill = SEX2)) +
+  geom_boxplot() +
+  labs(title = "Difference in Physical Health by Sex",
+       x = "Sex",
+       y = "Number of Poor Physical Health Days")
+
+
+```
+
+The histogram is left-skewed, meaning there is more frequency for variables on the end of the x-axis (the right). The mode is 30, meaning the vast majority of people had 30 days of not good physical health in the past month. The box plot shows that males have a greater median than females, which means they experience a higher number of days of poor physical health
+
+# Hypothesis Testing
+
+```{r include = FALSE}
+# Upper T-Test
+males_df <- filter(brfss, SEX2 == "Male")
+females_df <- filter(brfss, SEX2 == "Female")
+t.test(males_df$PHYSHLTH, females_df$PHYSHLTH, alternative = "greater")
+
+```
+The null hypothesis is the mean number of not good physical health days is equal for males and females. The alternative hypothesis is the mean number of not good physical health days is greater in males compared to females. The Alpha/significance level is 0.05. The type of test used was a one-tailed (upper) t-test. The p-value is 0.1196.
+
+# Conclusion
+Based on the conducted hypothesis test at a significance level of 0.05, we fail to reject the null hypothesis (p = 0.1196). This suggests that there is insufficient evidence to conclude that the mean physical health of males is significantly greater than that of females. Health practitioners can use these results to recognize that there may not be a significant difference in physical health between males and females, allowing for more gender-inclusive approaches to healthcare delivery. Patients can also benefit by understanding that gender alone may not be a strong predictor of physical health outcomes, encouraging them to focus on individualized health behaviors and interventions. The results were somewhat unexpected, as there is often a common assumption that males may have better physical health outcomes. Future research could delve deeper into potential confounding factors such as lifestyle, socioeconomic status, and access to healthcare, to provide a more nuanced understanding of gender differences in physical health.
+
+

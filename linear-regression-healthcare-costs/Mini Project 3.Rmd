@@ -1,0 +1,118 @@
+---
+title: "Linear Regression - Predicting Individual Medical Costs Billed by Health Insurance"
+author: "Name: Robert Dang"
+subtitle: "Date: April 29, 2024"
+output: html_document
+---
+
+## Introduction
+"The United States’ national health expenditure (NHE) grew 5.8% to $3.2 trillion in 2015 (i.e., $9,990 per person), which accounted for 17.8% of the nation’s gross domestic product (GDP). In seeking to control these unsustainable increases in healthcare costs, it is imperative that healthcare organizations can predict the likely future costs of individuals, so that care management resources can be efficiently targeted to those individuals at highest risk of incurring significant costs. Key stakeholders in these efforts to manage healthcare costs include health insurers, employers, society, and increasingly healthcare delivery organizations due to the transition from fee-for-service payment models to value-based payment models. For any given individual, insurers generally have the most comprehensive information on healthcare costs as they pay for care delivered across various healthcare delivery organizations.
+
+Predicting healthcare costs for individuals using accurate prediction models is important for various stakeholders beyond health insurers, and for various purposes. For health insurers and increasingly healthcare delivery systems, accurate forecasts of likely costs can help with general business planning in addition to prioritizing the allocation of scarce care management resources. Moreover, for patients, knowing in advance their likely expenditures for the next year could potentially allow them to choose insurance plans with appropriate deductibles and premiums."
+
+Excerpt from https://www-ncbi-nlm-nih-gov.proxy-um.researchport.umd.edu/pmc/articles/PMC5977561/
+
+## Exploratory Data Analysis
+This data file contains 1338 observations across 7 variables. The categorical variables are sex, children, smoker, and region. 51% of observations were from males. In the "children" column, the most common category is 0 children, comprising 43% of observations. There are more non-smokers than smokers; 80% of people do not smoke. For the "region" column, southeast is the most common cateogory, with 27% of responses. The continuous variables are age, bmi (body mass index), and charges (medical costs). For age, the mean of this variable is 39.2 and the standard deviation is 14. For bmi, the mean is 30.6 and the standard deviation is 6. And for charges, the mean is 13270.42 and the standard deviation is 12110.
+```{r warning=FALSE, message=FALSE, results = "hide", include=FALSE}
+# insert import & exploratory data analysis code here
+library(dplyr)
+library("ggplot2")
+
+data <- read.csv("insurance.csv")
+nrow(data)
+ncol(data)
+
+table(data$sex)
+males <- filter(data, sex == "male")
+males_pct <- round(nrow(males)/nrow(data) * 100)
+
+table(data$smoker)
+nonsmoke <- filter(data, smoker == "no")
+nonsmokepct <- round(nrow(nonsmoke)/nrow(data) * 100)
+
+table(data$region)
+southeast <- filter(data, region == "southeast")
+se_pct <- round(nrow(southeast)/nrow(data) * 100)
+
+table(data$children)
+nokids <- filter(data, children == 0)
+nokidspct <- round(nrow(nokids)/nrow(data) * 100)
+
+mean(data$age)
+sd(data$age)
+
+mean(data$bmi)
+sd(data$bmi)
+
+mean(data$charges)
+sd(data$charges)
+```
+
+## Data Visualization
+Boxplots were created for categorical variables to explore their relationship with the outcome variable "charges" (medical costs billed by health insurance). Scatterplots were created for continuous variables with the same purpose. In Figure 1, it shows that the median medical cost for males and females is approximately the same, but males have a greater interquartile range with Q3 being higher than Q3 for females, suggesting greater variability in the middle 50% of data. In Figure 2, the median medical cost appears to be the highest for those with 4 children, hovering around over $10,000. In Figure 3, we see The median charge for smokers is vastly greater than it is for non-smokers. Smokers have a median charge of about $35,000 while it is less than $10,000 for non-smokers. The IQR is greater for smokers too. In Figure 4, the northeast has the greatest median charge. It is just over $10,000 while all the other regions have a median slightly less than $10,000. The scatterplot shown in Figure 5 shows a postive correlation between Age and Charges. Similarly, the scatterplot in Figure 6 demonstrates a positive linear relationship between BMI and charges.
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+ggplot(data = data, aes(x = sex, y = charges, fill = sex)) +
+  geom_boxplot() +
+  labs(title = "Figure 1. Medical Costs by Sex",
+       x = "Sex",
+       y = "Charges")
+
+
+
+ggplot(data = data, aes(x = as.factor(children), y = charges, fill = as.factor(children), group = as.factor(children))) +
+  geom_boxplot() +
+  labs(title = "Figure 2. Medical Costs by Number of Children",
+       x = "Number of Children",
+       y = "Charges")
+
+ggplot(data = data, aes(x = smoker, y = charges, fill = smoker)) +
+  geom_boxplot() +
+  labs(title = "Figure 3. Medical Costs by Smoker Status",
+       x = "Smoker",
+       y = "Charges")
+
+ggplot(data = data, aes(x = region, y = charges, fill = region)) +
+  geom_boxplot() +
+  labs(title = "Figure 4. Medical Costs by Region",
+       x = "Region",
+       y = "Charges")
+
+
+ggplot(data = data, aes(x = age, y = charges)) +
+  geom_point() +
+  geom_smooth(method = "lm",  color = "blue") + 
+  labs(title = "Figure 5. Medical Costs by Age",
+       x = "Age",
+       y = "Charges")
+
+
+ggplot(data = data, aes(x = bmi, y = charges)) +
+  geom_point() +
+  geom_smooth(method = "lm",  color = "blue") + 
+  labs(title = "Figure 6. Medical Costs by Body Mass Index",
+       x = "BMI",
+       y = "Charges")
+
+
+```
+
+## Multiple Linear Regression Results
+The slope coefficicent for age is 257.19.For each one-year increase in age, the medical charges increase by approximately $257.19. The slope coefficient for BMI is 336.91, meaning for each unit increase in BMI, charges increase by $336.91 on average. The coefficient for "sexmale" (indicator for males) is -128.16. Therefore, the coefficient of -128.16 suggests that on average, being male is associated with medical charges approximately $128.16 lower than being female, holding all other variables constant. The coefficient for "smokeryes" is $23836.41. This means that smokers have medical charges approximately $23836.41 higher than non-smokers, holding all other variables constant. For children, the coefficients represent the change in medical charges relative to the reference level (0 children). Those with 1 child have medical charges approximately $390.98 higher than those with 0 children, holding all other variables constant. Individuals with 2, 3, 4, or 5 children covered by health insurance have charges $1635.78, $964.34, $2947.37, and $1116.04 higher, respectively, than those with 0 children. For region, the coefficients represent the change in medical charges compared to the reference region (northeast). For example: people living in the northwest have medical charges approximately $380.04 lower than those residing in the northeast.
+```{r warning=FALSE, message=FALSE, results="hide", include=TRUE}
+model <- lm(charges ~ age + sex + bmi + as.factor(children) + smoker + region, data = data)
+
+summary(model)
+
+
+```
+
+## Linear Regression Assumptions
+To assess linearity of data, use the Residuals vs Fitted plot. This assumption appears to be violated because the LOESS red line is curved. To assess normality of residuals, use the Q-Q Residuals plot. Deviations from the diagonal line suggest departures from normality. Based on this, normality is violated. To assess homogeneity of residuals variance, use the Scale-Location plot. The points are not scattered equally/randomly across the line, so this assumption is violated.
+
+```{r warning=FALSE, message=FALSE, echo=FALSE, include=FALSE}
+plot(model)
+```
+

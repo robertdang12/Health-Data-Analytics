@@ -16,7 +16,7 @@ Data visualization
 Descriptive and predictive analytics  
 Statistical modeling and machine learning in healthcare
 
-Linear Regression: Predicting Medical Costs  
+Linear Regression: Predicting Medical Costs:
 https://robertdang12.github.io/Health-Data-Analytics/linear-regression-healthcare-costs/  
 Analysis of Sex Disparities in Physical Health:  
 https://robertdang12.github.io/Health-Data-Analytics/gender-disparities-health-brfss-2010/
